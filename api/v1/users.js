@@ -9,6 +9,17 @@ var User = require('../../models/user');
 var requestPagerInit = require('../../helper/request-paginate');
 var requestAPIError = require('../../helper/request-api-error');
 var request = require('request');
+var NodeGeocoder = require('node-geocoder');
+var options = {
+    provider: 'google',
+    httpAdapter: 'https',
+    apiKey: 'AIzaSyAy4tpnHGONG_SPcQvRYm63paDgY-m_WYk',
+    formatter: null
+};
+
+var geocoder = NodeGeocoder(options);
+
+
 
 var getMe = function(req, res) {
 
@@ -45,21 +56,48 @@ var updateMe = function(req, res) {
                 user.lastName = req.body.last_name;
             }
             if(req.body.latitude) {
-                user.latitude = req.body.latitude;
+                user.latitude = parseFloat(req.body.latitude);
             }
 
             if(req.body.longitude) {
-                user.longitude = req.body.longitude;
+                user.longitude = parseFloat(req.body.longitude);
             }
 
             user.updateAt = new Date();
             user.save().then(function () {
-                res.json(user.expose());
+
+                if (!isNaN(user.longitude) && !isNaN(user.latitude)) {
+                    geocoder.reverse({lat:user.latitude, lon:user.longitude})
+                        .then(function(v) {
+                            if (v.length > 0) {
+
+                                user.city = v[0].city;
+                                user.country = v[0].country;
+                                user.zipCode = v[0].zipcode;
+
+                            } else {
+                                user.country = null;
+                                user.zipCode = null;
+                                user.city = null;
+                                user.latitude = null;
+                                user.longitude = null;
+                            }
+                            user.save().then(function () {
+                                res.json(user.expose());
+                            }).catch(function () {
+                                res.json(user.expose());
+                            })
+                        })
+                        .catch(function(err) {
+                            console.log(err);
+                        });
+
+                }
+
+
             }).catch(function () {
                 requestAPIError.error400(res);
             });
-
-            res.json(result[0].expose());
         } else {
             requestAPIError.error500(res);
         }

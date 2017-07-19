@@ -19,6 +19,8 @@ var userSchema = Schema({
     city : String,
     longitude: String,
     latitude:String,
+    country:String,
+    zipCode:String,
 }, {
     collection : 'users',
     timestamps : true
@@ -39,6 +41,8 @@ module.exports.prototype.expose = function () {
         email : this.email,
         birthday : this.birthday,
         city : this.city,
+        country: this.country,
+        zipCode : this.zipCode,
         longitude: parseFloat(this.longitude),
         latitude: parseFloat(this.latitude),
     };
