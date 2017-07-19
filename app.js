@@ -5,10 +5,61 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+var session = require('express-session');
+var mongoose = require('mongoose');
+var configDB = require('./config/db.js');
+var expressSession = require('express-session');
+
+var MongoStore = require('connect-mongo')(expressSession);
+
+
+
+var app = express();
+
+
 var index = require('./routes/index');
 var users = require('./routes/users');
 
-var app = express();
+
+
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////// Mongoose
+////////////////////////////////////////////////////////////////////////////
+
+mongoose.Promise = require('bluebird');
+mongoose.connect(configDB.url, {
+    server: {
+        auto_reconnect: true,
+        socketOptions: {
+            keepAlive: 120,
+            connectTimeoutMS: 150000
+        }
+    }
+});
+
+db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+    console.log("db connected to " + configDB.url);
+});
+
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////// Session
+////////////////////////////////////////////////////////////////////////////
+
+app.use(session({
+    secret: 'keyboardcat',
+    resave: false,
+    saveUninitialized: false,
+    clear_interval: 900,
+    cookie: { maxAge: 3600000 * 24 * 14},
+    store: new MongoStore({
+        mongooseConnection: mongoose.connection
+    })
+}));
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
