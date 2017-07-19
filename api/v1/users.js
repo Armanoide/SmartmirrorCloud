@@ -84,6 +84,7 @@ var getMeWeather = function (req, res) {
                 function (error, response, body) {
                 if (!error && response.statusCode == 200) {
                     var json = JSON.parse(body);
+                    json = json.vt1observation || {};
                     res.json({
 
                         'phrase' : json.phrase ? json.phrase : "-",
