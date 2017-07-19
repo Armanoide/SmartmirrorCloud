@@ -28,15 +28,7 @@ var users = require('./routes/users');
 ////////////////////////////////////////////////////////////////////////////
 
 mongoose.Promise = require('bluebird');
-mongoose.connect(configDB.url, {
-    server: {
-        auto_reconnect: true,
-        socketOptions: {
-            keepAlive: 120,
-            connectTimeoutMS: 150000
-        }
-    }
-});
+mongoose.connect(configDB.url, {useMongoClient:true});
 
 db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -75,6 +67,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/users', users);
+
+const apiUsers = require('./api/v1/users');
+
+app.use('/api/v1/users', apiUsers);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
